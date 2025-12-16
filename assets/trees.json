@@ -1,0 +1,58 @@
+{
+    "results": {
+        "result_pass": { "status": "PASS" },
+        "result_fail": { "status": "FAIL" },
+        "result_na": { "status": "NOT_APPLICABLE" }
+    },
+    "trees": [
+        {
+            "id": "ACM-1", 
+            "title": "Applicability of access control mechanisms",
+            "root": "node1",
+            
+            "dependencies": [], 
+
+            "nodes": {
+                "node1": {
+                    "question": "Is the public accesibility of the asset the equipment's intended equipment functionality?",
+                    "type": "boolean",
+                    "true": "result_na", 
+                    "false": "node2"        
+                },
+                "node2": {
+                    "question": "Do the physical or logical measures in the targeted operational environment limit the accessibility to authorized entities?",
+                    "type": "boolean",
+                    "true": "result_na",
+                    "false": "node3"
+                },
+                "node3": {
+                    "question": "Do legal implications not allow access control mechanisms?",
+                    "type": "boolean",
+                    "true": "result_na",
+                    "false": "node4"
+                },
+                "node4": {
+                    "question": "Are there access control mechanisms that manages entities' access to the security assets and network assets?",
+                    "type": "boolean",
+                    "true": "result_pass", 
+                    "false": "result_fail"
+                }
+            }
+        },
+        {
+            "id": "ACM-2", 
+            "title": "Appropriate access control mechanisms",
+            "root": "node1",
+            
+            "dependencies": ["ACM-1"], 
+            "nodes": {
+                "node1": {
+                "question": "Do the access control mechanisms ensure that only authorized entities have access to the protected security asset or network asset?",
+                "type": "boolean",
+                "true": "result_pass", 
+                "false": "result_fail"        
+                }
+            }
+        }
+    ]
+}

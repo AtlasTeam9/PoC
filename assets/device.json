@@ -1,0 +1,20 @@
+{
+  "device_name": "Smart Home Hub",
+  "assets": [
+    {
+      "id": "ASSET_01",
+      "name": "Wi-Fi Module",
+      "type": "Network"
+    },
+    {
+      "id": "ASSET_02",
+      "name": "Bluetooth Module",
+      "type": "Network"
+    },
+    {
+      "id": "ASSET_03",
+      "name": "System Firmware",
+      "type": "Security"
+    }
+  ]
+}

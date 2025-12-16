@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  # --- SERVIZIO BACKEND ---
+  backend:
+    build: ./backend
+    container_name: poc-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mappiamo la cartella assets locale dentro al container
+      # Il tuo codice Python cerca "../assets", quindi noi montiamo assets al livello superiore di /app
+      - ./assets:/assets
+      # Persistenza: salviamo i file delle sessioni sulla macchina host
+      - ./backend/sessions:/app/sessions
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  # --- SERVIZIO FRONTEND ---
+  frontend:
+    build: ./frontend
+    container_name: poc-frontend
+    ports:
+      - "3000:80" # Mappiamo la porta 3000 del tuo PC alla porta 80 del container
+    depends_on:
+      - backend # Aspetta che il backend sia pronto prima di partire

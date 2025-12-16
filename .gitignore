@@ -1,0 +1,23 @@
+# --- SISTEMA OPERATIVO & IDE ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# --- PYTHON (Backend) ---
+backend/venv/
+backend/.venv/
+backend/__pycache__/
+*.py[cod]
+
+# --- NODE/REACT (Frontend) ---
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+
+# --- SESSIONI & DATI LOCALI ---
+# Ignoriamo i file json delle sessioni (sono dati privati dell'utente)
+backend/sessions/*.json
+# ...ma manteniamo la cartella sessions vuota su git
+!backend/sessions/.gitkeep
