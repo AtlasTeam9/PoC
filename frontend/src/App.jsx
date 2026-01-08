@@ -26,18 +26,19 @@ function App() {
 
     setLoading(true);
     try {
-      const res = await axios.post(`${API_URL}/start-session-with-device-file`, 
-        formData, 
-        { 
-          headers: { 'Content-Type': 'multipart/form-data' } 
-        }
+      const res = await axios.post(
+        `${API_URL}/start-session-with-device-file`,
+        formData
       );
-      payload = res.data
+
+      const payload = res.data;
+
       setSession(payload.session_id);
       setStep(payload);
       setAssetName(payload.asset_name);
       setFinished(false);
     } catch (err) {
+      console.error(err);
       alert("Errore! Controlla che il file sia valido e il backend sia attivo.");
     }
     setLoading(false);
