@@ -68,7 +68,7 @@ def get_next_tree_index(current_index: int, current_asset_results: Dict[str,Any]
         # Se non ho bisogno di saltare l'albero, ritorno l'indice del prossimo albero eseguibile
         if not skip_tree: 
             return next_index
-        next_index += 1 # Se arrivo qui, significa che l'albero è stato saltato, quindi controllo il successivo
+        next_index += 1 # Controllo albero successivo
     return None # Nessun albero rimasto
 
 
@@ -182,7 +182,7 @@ def submit_answer(data: AnswerInput) -> Dict[str , Any]:
                 session.position.current_node_id = first_tree["root"]
                 
                 return {
-                    "finished": False,
+                    "finished": session.finished,
                     "device_name": device_name,
                     "asset_name": new_asset["name"],
                     "asset_index": next_asset_index,
@@ -195,7 +195,7 @@ def submit_answer(data: AnswerInput) -> Dict[str , Any]:
                 # --- TUTTO FINITO, sia asset che alberi ---
                 session.finished = True
                 return {
-                    "finished": True,
+                    "finished": session.finished,
                     "final_results": session.results
                 }
     else:
@@ -282,7 +282,7 @@ async def import_session(file: UploadFile = File(...)) -> Dict[str, Any]:
         
         return {
             "session_id": session_id,
-            "finished": False,
+            "finished": session.finished,
             "device_name": device.device_name,
             "asset_name": current_asset["name"],
             "tree_id": tree["id"],
