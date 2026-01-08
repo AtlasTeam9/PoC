@@ -5,6 +5,9 @@ from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from utils.session import Session
+from utils.device import Device
+from utils.position import Position
 
 app = FastAPI()
 
@@ -83,29 +86,23 @@ async def start_session_file(file: UploadFile = File(...)):
         
         session_id = str(uuid.uuid4())
 
+        device = Device(device_name=device_data.get("device_name", "Unknown Device"), device_assets=assets)
+
+        position = Position(0, 0, TREES_LIST[0]["root"])
+        
         # Inizializza la sessione in memoria
-        sessions[session_id] = { 
-            "session_id": session_id,
-            "device_name": device_data.get("device_name", "Unknown Device"),
-            "assets": assets,  # Lista di asset caricati da valutare
-            "current_asset_index": 0, # Indice dell'asset corrente 
-            "current_tree_index": 0, # Indice dell'albero corrente
-            "current_node_id": TREES_LIST[0]["root"], # Nodo corrente nell'albero
-            "results": {}, # Dizionario per memorizzare i risultati 
-            "history": [] # Storico delle risposte
-        }
+        session = Session(session_id, device, position)
 
         # Prepara lo spazio per i risultati del primo asset
         first_asset_id = assets[0]["id"]
-        sessions[session_id]["results"][first_asset_id] = {}
+        session["results"][first_asset_id] = {}
 
         # Prende la prima domanda del primo albero
         first_question = TREES_LIST[0]["nodes"][TREES_LIST[0]["root"]]
 
         # Ritorna i dati iniziali della sessione
         return {
-            "session_id": session_id,
-            "device_name": device_data.get("device_name", "Unknown Device"),
+            session, 
             "asset_name": assets[0]["name"],
             "asset_index": 0,
             "total_assets": len(assets),
