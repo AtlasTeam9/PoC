@@ -1,6 +1,7 @@
 from .device import Device
 from .position import Position
 from dataclasses import dataclass
+from typing import Dict
 
 @dataclass
 class Session(): 
@@ -8,15 +9,15 @@ class Session():
     session_id : str 
     device : Device
     position : Position
-    results : object
+    results : Dict
     finished : bool
 
-    def __init__(self, session_id : str, device : Device, position : Position, result : object = None, finished : bool = None): 
+    def __init__(self, session_id : str, device : Device, position : Position, result : Dict | None = None, finished : bool = False): 
         self.session_id = session_id
         self.device = device
         self.position = position
         self.results = result if result is not None else {}
-        self.finished = finished if finished is not None else False
+        self.finished = finished
 
     def to_dict(self):
         return {
