@@ -2,6 +2,7 @@ import { useState } from 'react'
 import axios from 'axios'
 import './App.css'
 import QuestionCard from './components/QuestionCard';
+import ListResult from './components/ListResult'
 
 // Configurazione base API (punta al backend Python)
 const API_URL = "http://127.0.0.1:8000";
@@ -195,8 +196,10 @@ function App() {
       <div className="container">
         <h1 style={{ color: '#48bb78' }}>Valutazione Completata</h1>
         <div style={{ textAlign: 'left', background: '#f7fafc', padding: 15, borderRadius: 8, margin: '20px 0' }}>
-          <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.9rem' }}>
-            {JSON.stringify(results, null, 2)}
+          <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.9rem', color: 'black' }}>
+            {results && Object.entries(results).map(([asset_name, value]) => (
+              <ListResult asset_name={asset_name} data={[value]} />
+            ))}
           </pre>
         </div>
         <button className="btn-save" onClick={handleSave}>Scarica Report Finale</button>
