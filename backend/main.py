@@ -5,6 +5,10 @@ from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from utils.session import Session
+from utils.device import Device
+from utils.position import Position
+from typing import Dict, Any
 
 app = FastAPI()
 
@@ -33,7 +37,7 @@ except FileNotFoundError:
     RESULTS = {}
 
 # -- Variabile per salvare lo stato in memoria durante l'esecuzione --
-sessions = {}
+sessions : Dict[str, Session] = {}
 
 # -- Modelli dei dati, per validare input e output --
 class AnswerInput(BaseModel):
@@ -41,7 +45,7 @@ class AnswerInput(BaseModel):
     answer: bool
 
 # -- FUNZIONI --
-def get_next_tree_index(current_index, current_asset_results):
+def get_next_tree_index(current_index: int, current_asset_results: Dict[str,Any]) -> int | None:
     """
     Calcola il prossimo albero eseguibile per l'asset corrente, saltando gli alberi le cui dipendenze non sono soddisfatte.
     Prende in input l'indice dell'albero corrente e i risultati dell'asset attuale.
@@ -64,14 +68,14 @@ def get_next_tree_index(current_index, current_asset_results):
         # Se non ho bisogno di saltare l'albero, ritorno l'indice del prossimo albero eseguibile
         if not skip_tree: 
             return next_index
-        next_index += 1 # Se arrivo qui, significa che l'albero è stato saltato, quindi controllo il successivo
+        next_index += 1 # Controllo albero successivo
     return None # Nessun albero rimasto
 
 
 # -- ENDPOINTS API --
 # Inizializza una nuova sessione con file dispositivo caricato
 @app.post("/start-session-with-device-file")
-async def start_session_file(file: UploadFile = File(...)):
+async def start_session_file(file: UploadFile = File(...)) -> Dict[str , Any]:
     try:
         # Legge il contenuto del file caricato
         content = await file.read()
@@ -83,29 +87,24 @@ async def start_session_file(file: UploadFile = File(...)):
         
         session_id = str(uuid.uuid4())
 
+        device = Device(device_name=device_data.get("device_name", "Unknown Device"), device_assets=assets)
+
+        position = Position(0, 0, TREES_LIST[0]["root"])
+        
         # Inizializza la sessione in memoria
-        sessions[session_id] = { 
-            "session_id": session_id,
-            "device_name": device_data.get("device_name", "Unknown Device"),
-            "assets": assets,  # Lista di asset caricati da valutare
-            "current_asset_index": 0, # Indice dell'asset corrente 
-            "current_tree_index": 0, # Indice dell'albero corrente
-            "current_node_id": TREES_LIST[0]["root"], # Nodo corrente nell'albero
-            "results": {}, # Dizionario per memorizzare i risultati 
-            "history": [] # Storico delle risposte
-        }
+        session = Session(session_id, device, position)
+        sessions[session.session_id] = session
 
         # Prepara lo spazio per i risultati del primo asset
         first_asset_id = assets[0]["id"]
-        sessions[session_id]["results"][first_asset_id] = {}
+        session.results[first_asset_id] = {}
 
         # Prende la prima domanda del primo albero
         first_question = TREES_LIST[0]["nodes"][TREES_LIST[0]["root"]]
 
         # Ritorna i dati iniziali della sessione
         return {
-            "session_id": session_id,
-            "device_name": device_data.get("device_name", "Unknown Device"),
+            "session_id": session.session_id, 
             "asset_name": assets[0]["name"],
             "asset_index": 0,
             "total_assets": len(assets),
@@ -118,22 +117,22 @@ async def start_session_file(file: UploadFile = File(...)):
 
 # Gestisce la risposta dell'utente
 @app.post("/submit-answer")
-def submit_answer(data: AnswerInput):
+def submit_answer(data: AnswerInput) -> Dict[str , Any]:
     # Recupera la sessione dalla memoria
     session = sessions.get(data.session_id)
     if not session:
         raise HTTPException(404, "Sessione non trovata.")
     
     # Recupera i dati correnti della sessione
-    device_name = session.get("device_name", "Unknown Device")
-    asset_index = session["current_asset_index"]
-    current_asset = session["assets"][asset_index]
+    device_name = session.device.device_name
+    asset_index = session.position.current_asset_index
+    current_asset = session.device.device_assets[asset_index]
     asset_id = current_asset["id"]
 
-    tree_index = session["current_tree_index"]
+    tree_index = session.position.current_tree_index
     current_tree = TREES_LIST[tree_index]
 
-    current_node = current_tree["nodes"][session["current_node_id"]]
+    current_node = current_tree["nodes"][session.position.current_node_id]
 
     # Calcola il prossimo step
     next_step_key = "true" if data.answer else "false"
@@ -144,23 +143,23 @@ def submit_answer(data: AnswerInput):
         # Se lo è, salva il risultato per l'albero corrente
         result = RESULTS[next_step_id]
 
-        if asset_id not in session["results"]:
-            session["results"][asset_id] = {}
-        session["results"][asset_id][current_tree["id"]] = result
+        if asset_id not in session.results:
+            session.results[asset_id] = {}
+        session.results[asset_id][current_tree["id"]] = result
 
         # Trova il prossimo albero eseguibile chiamando la funzione
-        next_tree_index = get_next_tree_index(tree_index, session["results"][asset_id])
+        next_tree_index = get_next_tree_index(tree_index, session.results[asset_id])
 
         # Se non ci sono più alberi per l'asset corrente
         if next_tree_index is not None:
             # Stesso asset, prossimo albero
-            session["current_tree_index"] = next_tree_index
+            session.position.current_tree_index = next_tree_index
             next_tree = TREES_LIST[next_tree_index]
-            session["current_node_id"] = next_tree["root"]
+            session.position.current_node_id = next_tree["root"]
 
             # Ritorna la prossima domanda
             return {
-                "finished": False,
+                "finished": session.finished,
                 "device_name": device_name,
                 "asset_name": current_asset["name"],
                 "tree_id": next_tree["id"],
@@ -172,18 +171,18 @@ def submit_answer(data: AnswerInput):
             # Alberi per asset correnti terminati, controllo se ci sono altri asset da valutare
             next_asset_index = asset_index + 1
 
-            if next_asset_index < len(session["assets"]):
-                session["current_asset_index"] = next_asset_index
-                session["current_tree_index"] = 0 # Reset alberi
-                new_asset = session["assets"][next_asset_index]
+            if next_asset_index < len(session.device.device_assets):
+                session.position.current_asset_index = next_asset_index
+                session.position.current_tree_index = 0 # Reset alberi
+                new_asset = session.device.device_assets[next_asset_index]
                 
                 # Setup per nuovo asset
-                session["results"][new_asset["id"]] = {}
+                session.results[new_asset["id"]] = {}
                 first_tree = TREES_LIST[0]
-                session["current_node_id"] = first_tree["root"]
+                session.position.current_node_id = first_tree["root"]
                 
                 return {
-                    "finished": False,
+                    "finished": session.finished,
                     "device_name": device_name,
                     "asset_name": new_asset["name"],
                     "asset_index": next_asset_index,
@@ -194,18 +193,18 @@ def submit_answer(data: AnswerInput):
                 }
             else:
                 # --- TUTTO FINITO, sia asset che alberi ---
-                session["finished"] = True
+                session.finished = True
                 return {
-                    "finished": True,
-                    "final_results": session["results"]
+                    "finished": session.finished,
+                    "final_results": session.results
                 }
     else:
         # Se il prossimo passo non è un risultato, continua nell'albero corrente
         # Passo al prossimo nodo nello stesso albero per lo stesso asset
-        session["current_node_id"] = next_step_id
+        session.position.current_node_id = next_step_id
 
         return {
-            "finished": False,
+            "finished": session.finished,
             "device_name": device_name,
             "asset_name": current_asset["name"],
             "tree_id": current_tree["id"],
@@ -215,7 +214,7 @@ def submit_answer(data: AnswerInput):
     
 # Esporta la sessione come file JSON
 @app.get("/export-session/{session_id}")
-def export_session(session_id: str):
+def export_session(session_id: str) -> JSONResponse: 
     """
     Restituisce l'intero oggetto sessione come JSON.
     """
@@ -225,13 +224,13 @@ def export_session(session_id: str):
     
     # Restituisce il JSON e ne forza il download
     return JSONResponse(
-        content=session,
+        content=session.to_dict(),
         headers={"Content-Disposition": f"attachment; filename=session_{session_id}.json"}
     )
 
 # Importa una sessione esistente da file JSON
 @app.post("/import-session")
-async def import_session(file: UploadFile = File(...)):
+async def import_session(file: UploadFile = File(...)) -> Dict[str, Any]:
     """
     Riceve un file JSON, lo legge e lo rimette in memoria (sessions).
     """
@@ -240,32 +239,52 @@ async def import_session(file: UploadFile = File(...)):
         data = json.loads(content)
         
         # Validazione minima
-        s_id = data.get("session_id")
-        if not s_id:
+        session_id = data.get("session_id")
+        if not session_id:
             raise HTTPException(400, "JSON non valido: manca session_id")
-            
+        
+        device_data = data["device"]
+        device = Device(
+            device_name=device_data["device_name"],
+            device_assets=device_data["device_assets"]
+        )
+
+        pos_data = data["position"]
+        position = Position(
+            current_asset_index=pos_data["current_asset_index"],
+            current_tree_index=pos_data["current_tree_index"],
+            current_node_id=pos_data["current_node_id"]
+        )
+
+        session = Session(
+            session_id=session_id,
+            device=device,
+            position=position
+        )
+        session.results = data.get("results", {})
+        session.finished = data.get("finished", False)
+
         # Ripristina la sessione in memoria
-        sessions[s_id] = data
+        sessions[session_id] = session
 
         # Controlla se la sessione è già finita
-        if data.get("finished") is True:
-            # Ritorna i risultati finali
+        if session.finished:
             return {
-                "session_id": s_id,
-                "finished": True,
-                "final_results": data["results"]
+                "session_id": session_id,
+                "finished": session.finished,
+                "final_results": session.results
             }
         
         # Se la sessione non è finita, ritorna lo stato attuale per far riprendere le domande
-        asset = data["assets"][data["current_asset_index"]]
-        tree = TREES_LIST[data["current_tree_index"]]
-        node = tree["nodes"][data["current_node_id"]]
+        current_asset = device.device_assets[position.current_asset_index]
+        tree = TREES_LIST[position.current_tree_index]
+        node = tree["nodes"][position.current_node_id]
         
         return {
-            "session_id": data["session_id"],
-            "finished": False,
-            "device_name": data.get("device_name", "Unknown Device"),
-            "asset_name": asset["name"],
+            "session_id": session_id,
+            "finished": session.finished,
+            "device_name": device.device_name,
+            "asset_name": current_asset["name"],
             "tree_id": tree["id"],
             "title": tree["title"],
             "question": node
