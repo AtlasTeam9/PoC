@@ -1,0 +1,60 @@
+{
+  "device_name": "Coffee Machine",
+  "assets": [
+    {
+      "id": "ASSET_01",
+      "name": "DHCP Client",
+      "type": "Network Function"
+    },
+    {
+      "id": "ASSET_02",
+      "name": "DHCP Client configuration",
+      "type": "Network Function Configuration"
+    },
+    {
+      "id": "ASSET_03",
+      "name": "DNS Client configuration",
+      "type": "Network Function Configuration"
+    },
+    {
+      "id": "ASSET_04",
+      "name": "Mosquitto broker",
+      "type": "Network Function"
+    },
+    {
+      "id": "ASSET_05",
+      "name": "Mosquitto broker configuration",
+      "type": "Network Function Configuration"
+    },
+    {
+      "id": "ASSET_06",
+      "name": "Mosquitto Client",
+      "type": "Security Function"
+    },
+    {
+      "id": "ASSET_07",
+      "name": "Mosquitto Client configuration",
+      "type": "Security Parameter"
+    },
+    {
+      "id": "ASSET_08",
+      "name": "wpa_supplicant",
+      "type": "Security Function"
+    },
+    {
+      "id": "ASSET_09",
+      "name": "wpa_supplicant configuration",
+      "type": "Security Parameter"
+    },
+    {
+      "id": "ASSET_10",
+      "name": "SSH client",
+      "type": "Security Function"
+    },
+    {
+      "id": "ASSET_11",
+      "name": "SSH client configuration",
+      "type": "Security Parameter"
+    }
+  ]
+}
