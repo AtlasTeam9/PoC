@@ -2,6 +2,7 @@ import { useState } from 'react'
 import axios from 'axios'
 import './App.css'
 import QuestionCard from './components/QuestionCard';
+import ListResult from './components/ListResult'
 
 // Configurazione base API (punta al backend Python)
 const API_URL = "http://127.0.0.1:8000";
@@ -26,12 +27,19 @@ function App() {
 
     setLoading(true);
     try {
-      const res = await axios.post(`${API_URL}/start-session-with-device-file`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-      setSession(res.data.session_id);
-      setStep(res.data);
-      setAssetName(res.data.asset_name);
+      const res = await axios.post(
+        `${API_URL}/start-session-with-device-file`,
+        formData
+      );
+
+      const payload = res.data;
+
+      setSession(payload.session_id);
+      setStep(payload);
+      setAssetName(payload.asset_name);
       setFinished(false);
     } catch (err) {
+      console.error(err);
       alert("Errore! Controlla che il file sia valido e il backend sia attivo.");
     }
     setLoading(false);
@@ -188,8 +196,10 @@ function App() {
       <div className="container">
         <h1 style={{ color: '#48bb78' }}>Valutazione Completata</h1>
         <div style={{ textAlign: 'left', background: '#f7fafc', padding: 15, borderRadius: 8, margin: '20px 0' }}>
-          <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.9rem' }}>
-            {JSON.stringify(results, null, 2)}
+          <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.9rem', color: 'black' }}>
+            {results && Object.entries(results).map(([asset_name, value]) => (
+              <ListResult asset_name={asset_name} data={[value]} />
+            ))}
           </pre>
         </div>
         <button className="btn-save" onClick={handleSave}>Scarica Report Finale</button>
