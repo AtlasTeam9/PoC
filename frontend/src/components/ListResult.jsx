@@ -12,7 +12,7 @@ function ListResult({asset_name, data}){
     return (
         <>  
             <div style={{color : 'gray', margin:'5px 0px'}}>
-                <span style={{fontSize:'20px', cursor:'pointer'}} onClick={showList}>{asset_name}</span>
+                <span style={{fontSize:'20px', cursor:'pointer', border:'2px solid gray', padding: '4px 0px 4px 8px', width: 'auto', display: 'block', borderRadius: '5px'}} onClick={showList}>{asset_name}</span>
                 {
                 isShowed && Object.entries(data[0]).map(([requirement, result]) => (
                     <Result requirement={requirement} result={result.status} />
