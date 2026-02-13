@@ -40,7 +40,7 @@ function App() {
       setFinished(false);
     } catch (err) {
       console.error(err);
-      alert("Errore! Controlla che il file sia valido e il backend sia attivo.");
+      alert("Error! Please check that the file is valid and the backend is running.");
     }
     setLoading(false);
   };
@@ -63,7 +63,7 @@ function App() {
         }
       }
     } catch (err) {
-      alert("Errore nell'invio della risposta");
+      alert("Error submitting answer. Please try again.");
     }
   };
 
@@ -100,7 +100,7 @@ function App() {
       if (res.data.finished) {
         setFinished(true);
         setResults(res.data.final_results);
-        alert("Sessione ripristinata con successo! La valutazione era già completata.");
+        alert("Session restored successfully! The evaluation was already completed.");
       } else {
         setFinished(false);
         setStep({
@@ -110,11 +110,11 @@ function App() {
           device_name: res.data.device_name
         });
         setAssetName(res.data.asset_name);
-        alert("Sessione ripristinata con successo!");
+        alert("Session restored successfully!");
       }
     } catch (err) {
       console.error(err);
-      alert("File non valido o errore del server");
+      alert("File not valid or server error. Please check the file and try again.");
     }
     setLoading(false);
   };
@@ -127,12 +127,12 @@ function App() {
   if (!session) {
   return (
     <div className="container">
-      <h1>Valutazione EN18031</h1>
+      <h1>EN18031 Evaluation</h1>
       <p>Proof of Concept - Team Atlas</p>
 
       <div style={{ marginTop: 40 }}>
         <label className="carica-file">
-          Carica file Dispositivo
+          Upload Device File
         </label>
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 5 }}>
           <input 
@@ -157,7 +157,7 @@ function App() {
           </label>
         </div>
         <p style={{ fontSize: '0.8rem', color: '#666', marginTop: 5 }}>
-          Il file deve contenere la lista degli asset da valutare.
+          File must contain the device information in JSON format.
         </p>
 
         <div style={{ marginTop: 20, borderTop: '1px solid #eee', paddingTop: 20 }}>
@@ -181,7 +181,7 @@ function App() {
                 display: 'inline-block'
               }}
             >
-              Carica Sessione
+              Upload Session
             </label>
           </div>
         </div>
@@ -194,7 +194,7 @@ function App() {
   if (finished) {
     return (
       <div className="container">
-        <h1 style={{ color: '#48bb78' }}>Valutazione Completata</h1>
+        <h1 style={{ color: '#48bb78' }}>Evaluation Completed</h1>
         <div style={{ textAlign: 'left', background: '#f7fafc', padding: 15, borderRadius: 8, margin: '20px 0' }}>
           <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.9rem', color: 'black' }}>
             {results && Object.entries(results).map(([asset_name, value]) => (
@@ -202,10 +202,10 @@ function App() {
             ))}
           </pre>
         </div>
-        <button className="btn-save" onClick={handleSave}>Scarica Report Finale</button>
+        <button className="btn-save" onClick={handleSave}>Download Final Report</button>
         <br /><br />
         <button onClick={() => window.location.reload()} style={{ color: '#666', background: 'none' }}>
-          Torna alla Home
+          Back to Home
         </button>
       </div>
     );
@@ -217,7 +217,7 @@ function App() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
           <span className="tree-tag" style={{ background: '#3182ce', color: 'white' }}>
-            Dispositivo: {step.device_name || "Sconosciuto"}
+            Device: {step.device_name || "Unknown Device"}
           </span>
           <span className="tree-tag" style={{ background: '#4299e1', color: 'white' }}>
             Asset: {assetName}
@@ -225,12 +225,12 @@ function App() {
         </div>
 
         <button onClick={handleSave} style={{ fontSize: '0.8rem', padding: '8px 12px' }}>
-          Salva e Esci
+          Save and Exit
         </button>
       </div>
 
       <div style={{ marginTop: 10, fontSize: '0.9rem', color: '#888', marginBottom: 10 }}>
-        Requisito (Albero): {step.tree_id}
+        Requirement (Tree): {step.tree_id}
       </div>
 
       <QuestionCard step={step} onAnswer={sendAnswer} />
