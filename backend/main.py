@@ -104,7 +104,8 @@ async def start_session_file(file: UploadFile = File(...)) -> Dict[str , Any]:
 
         # Ritorna i dati iniziali della sessione
         return {
-            "session_id": session.session_id, 
+            "session_id": session.session_id,
+            "device_name": device.device_name,
             "asset_name": assets[0]["name"],
             "asset_index": 0,
             "total_assets": len(assets),
